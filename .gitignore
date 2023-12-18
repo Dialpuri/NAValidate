@@ -1,0 +1,11 @@
+#Build files
+bin/*
+navalidate
+vis
+results
+py
+
+
+#IDE
+.idea/*
+.vscode/*
