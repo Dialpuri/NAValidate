@@ -4,9 +4,22 @@
 
 #ifndef VALIDATE_H
 #define VALIDATE_H
+
+#include <set>
 #include <clipper/clipper-minimol.h>
+#include "validate-util.h"
+#include "pucker_validate.h"
+
 class Validate {
-    Validate(const clipper::MiniMol& mol);
+public:
+    explicit Validate(clipper::MiniMol& mol);
+
+    void validate();
+
+protected:
+    clipper::MiniMol m_mol;
+    std::set<std::string> m_na_names = {"A", "C", "G", "U", "DA", "DC", "DG", "DT"};
+
 };
 
 

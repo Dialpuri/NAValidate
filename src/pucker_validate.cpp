@@ -3,64 +3,7 @@
 //
 #include "pucker_validate.h"
 
-ValidateSugar::ValidateSugar(clipper::MiniMol& mol) {
-    clipper::MiniMol na_only_model;
-
-    for (int p = 0; p < mol.size(); p++) {
-        clipper::MPolymer mp;
-        mp.set_id(mol[p].id());
-
-        for (int m = 0; m < mol[p].size(); m++) {
-            auto it = m_NA_names.find(mol[p][m].type().trim());
-            if (it != m_NA_names.end()) {
-                mp.insert(mol[p][m]);
-            }
-        }
-
-        na_only_model.insert(mp);
-    }
-    m_mol = na_only_model;
-}
-
-void ValidateSugar::validate() {
-    std::vector<std::vector<std::string>> results;
-    for (int p = 0; p < m_mol.size(); p++) {
-        for (int m = 0; m < m_mol[p].size(); m++) {
-            std::vector<std::string> result = {m_mol[p].id(), m_mol[p][m].id(), m_mol[p][m].type()};
-
-            const PuckerResult pucker_result = calculate_pucker(m_mol[p][m]);
-            result.emplace_back(std::to_string(pucker_result.P));
-            result.emplace_back(std::to_string(pucker_result.theta_m));
-            if (!pucker_result.is_null()) {
-                const PuckerType pt = classify_pucker(pucker_result);
-                result.push_back(pucker_type_to_string(pt));
-            }
-            result.push_back(type_classification(m_mol[p][m].type()));
-
-            const BaseConformationResult conformation_result = calculate_base_conformation(m_mol[p][m]);
-            result.emplace_back(std::to_string(pucker_result.P));
-            result.emplace_back(std::to_string(pucker_result.theta_m));
-
-
-            results.push_back(result);
-        }
-    }
-
-    std::ofstream ofile;
-    ofile.open("./results/1hr2.pdb");
-
-    ofile << "ChainID,ResidueID,ResidueType,Pucker_P,Pucker_Theta,Pucker_Conformation,Base_Type,Base_Angle,Base_Conformation_Classification\n";
-    for (const auto& r: results) {
-        for (const auto& a: r) {
-            ofile << a << ",";
-        }
-        ofile << "\n";
-    }
-    ofile.close();
-
-}
-
-PuckerResult ValidateSugar::calculate_pucker(clipper::MMonomer& monomer) {
+PuckerResult PuckerValidate::calculate_pucker(const clipper::MMonomer& monomer) {
 // Torsions according to https://pubs.acs.org/doi/10.1021/acs.orglett.6b03626
     int i_c1 = monomer.lookup("C1'", clipper::MM::UNIQUE);
     int i_c2 = monomer.lookup("C2'", clipper::MM::UNIQUE);
@@ -74,25 +17,25 @@ PuckerResult ValidateSugar::calculate_pucker(clipper::MMonomer& monomer) {
         return PuckerResult::null();
     }
 
-    clipper::Coord_orth c1 = monomer[i_c1].coord_orth();
-    clipper::Coord_orth c2 = monomer[i_c2].coord_orth();
-    clipper::Coord_orth c3 = monomer[i_c3].coord_orth();
-    clipper::Coord_orth c4 = monomer[i_c4].coord_orth();
+    const clipper::Coord_orth c1 = monomer[i_c1].coord_orth();
+    const clipper::Coord_orth c2 = monomer[i_c2].coord_orth();
+    const clipper::Coord_orth c3 = monomer[i_c3].coord_orth();
+    const clipper::Coord_orth c4 = monomer[i_c4].coord_orth();
     // clipper::Coord_orth c5 = monomer[i_c5].coord_orth();
-    clipper::Coord_orth o4 = monomer[i_o4].coord_orth();
+    const clipper::Coord_orth o4 = monomer[i_o4].coord_orth();
 
-    float phi_0_d = Util::torsion(c1,c2,c3,c4);
-    float phi_1_d = Util::torsion(c2,c3,c4,o4);
-    float phi_2_d = Util::torsion(c3,c4,o4,c1);
-    float phi_3_d = Util::torsion(c4,o4,c1,c2);
-    float phi_4_d = Util::torsion(o4,c1,c2,c3);
+    const float phi_0_d = ValidateUtil::torsion(c1,c2,c3,c4);
+    const float phi_1_d = ValidateUtil::torsion(c2,c3,c4,o4);
+    const float phi_2_d = ValidateUtil::torsion(c3,c4,o4,c1);
+    const float phi_3_d = ValidateUtil::torsion(c4,o4,c1,c2);
+    const float phi_4_d = ValidateUtil::torsion(o4,c1,c2,c3);
 
-    float numerator = (phi_2_d + phi_4_d) - (phi_1_d + phi_3_d);
-    float denominator =  phi_0_d * 3.077;
-    float eqn = numerator / denominator;
+    const float numerator = (phi_2_d + phi_4_d) - (phi_1_d + phi_3_d);
+    const float denominator =  phi_0_d * 3.077;
+    const float eqn = numerator / denominator;
 
     float P = clipper::Util::rad2d(atan(eqn));
-    float theta_m = phi_0_d / clipper::Util::rad2d(cos(clipper::Util::d2rad(P)));
+    const float theta_m = phi_0_d / clipper::Util::rad2d(cos(clipper::Util::d2rad(P)));
 
     if (clipper::Util::is_nan(P)) {
         return PuckerResult::null();
@@ -102,20 +45,44 @@ PuckerResult ValidateSugar::calculate_pucker(clipper::MMonomer& monomer) {
         P += 360;
     }
 
-    PuckerResult pr;
-    pr.P = P;
-    pr.theta_m = theta_m;
+    const PuckerResult pr = {P, theta_m};
     return pr;
 }
 
-PuckerType ValidateSugar::classify_pucker(PuckerResult pucker) {
+PuckerType PuckerValidate::classify_pucker(const PuckerResult& pucker) {
+    const std::vector<PuckerConformation> cyclic_pucker_types = {_3T2, __3E, _3T4, __E4, _OT4, __OE, _OT1, __E1, _2T1, __2E,
+                                                        _2T3, __E3, _4T3, __4E, _4TO, __EO, _1TO, __1E, _1T2, __E2};
     int index = round(pucker.P/18);
-    if (index >= m_cyclic_pucker_types.size()) {
-        index = index-m_cyclic_pucker_types.size();
+    if (index >= cyclic_pucker_types.size()) {
+        index = index-cyclic_pucker_types.size();
     }
-    return m_cyclic_pucker_types[index+1];
+    PuckerType pt;
+    pt.conformation = cyclic_pucker_types[index+1];
+    return pt;
 }
 
 std::string PuckerType::to_string() const {
-
+    switch (conformation) {
+        case _3T2: return "3T2";
+        case __3E: return "3E";
+        case _3T4: return "3T4";
+        case __E4: return "E4";
+        case _OT4: return "OT4";
+        case __OE: return "OE";
+        case _OT1: return "OT1";
+        case __E1: return "E1";
+        case _2T1: return "2T1";
+        case __2E: return "2E";
+        case _2T3: return "2T3";
+        case __E3: return "E3";
+        case _4T3: return "4T3";
+        case __4E: return "4E";
+        case _4TO: return "4TO";
+        case __EO: return "EO";
+        case _1TO: return "1TO";
+        case __1E: return "1E";
+        case _1T2: return "1T2";
+        case __E2: return "E2";
+        default: return "UK";
+    }
 }

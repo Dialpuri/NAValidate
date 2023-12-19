@@ -1,7 +1,5 @@
 #include <clipper/clipper-ccp4.h>
 #include <clipper/clipper-minimol.h>
-
-#include <stdio.h>
 #include "validate.h"
 
 

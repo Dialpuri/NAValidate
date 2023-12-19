@@ -5,7 +5,7 @@
 # NAMES OF LIBRARY FILES E.G nautilus-join 
 SHARED = \
  pucker_validate \
- base_validate \
+ base_validation \
  validate
 
 LIBS = \
