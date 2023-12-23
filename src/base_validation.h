@@ -18,9 +18,14 @@ struct BaseConformationResult {
 
 class BaseConformationValidation {
 public:
-    static float calculate_chi(const clipper::MMonomer& monomer);
+    static double calculate_chi(const clipper::MMonomer&monomer);
     static Matrix<float> calculate_plane_equation(const clipper::MMonomer& monomer);
+    static clipper::Vec3<> calculate_plane(const clipper::MMonomer& monomer);
+    static std::vector<clipper::Vec3<>> calculate_vector_calculation_point(const clipper::MMonomer& monomer);
 
+    static float clip(float n, float lower, float upper) {
+        return std::max(lower, std::min(n, upper));
+    }
 private:
     std::set<std::string> base_atoms = {
         "C1",

@@ -26,6 +26,7 @@ Validate::Validate(clipper::MiniMol& mol) {
 }
 
 void Validate::validate() {
+
     std::vector<std::vector<std::string>> results;
     for (int p = 0; p < m_mol.size(); p++) {
         for (int m = 0; m < m_mol[p].size(); m++) {
@@ -40,17 +41,12 @@ void Validate::validate() {
             }
             result.push_back(ValidateUtil::base_type(m_mol[p][m].type()));
 
-            BaseConformationValidation::calculate_chi(m_mol[p][m]);
-
-            // const BaseConformationResult conformation_result = calculate_base_conformation(m_mol[p][m]);
-            // result.emplace_back(std::to_string(pucker_result.P));
-            // result.emplace_back(std::to_string(pucker_result.theta_m));
-
+            double chi = BaseConformationValidation::calculate_chi(m_mol[p][m]);
+            result.push_back(std::to_string(chi));
 
             results.push_back(result);
         }
     }
-
     std::ofstream ofile;
     ofile.open("./results/1hr2.pdb");
 
