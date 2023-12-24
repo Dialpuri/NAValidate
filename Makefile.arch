@@ -4,9 +4,11 @@
 
 # NAMES OF LIBRARY FILES E.G nautilus-join 
 SHARED = \
- pucker_validate \
+ base/conformation-validation \
+ base/pairing-validation \
+ sugar/pucker-validation \
  validate \
- base_validation
+ util/validate-util
 
 LIBS = \
 -lccp4c \
@@ -28,10 +30,9 @@ FLAGS = \
 -Wno-sign-compare \
 -fPIC \
 -ftemplate-depth-50 \
--D_GLIBCXX_USE_CXX11_ABI=0 \
--g
+-D_GLIBCXX_USE_CXX11_ABI=0
 
-INCDIR = -Iinclude
+INCDIR = -Iinclude -Isrc/base -Isrc/sugar -Isrc/util
 LIBDIR = -L${CCP4}/lib
 #LIBDIR = -Llib
 CFLAGS = ${FLAGS} ${INCDIR} -c
@@ -42,7 +43,10 @@ BIN_DIR = bin
 
 OBJS = $(SHARED:=.o)
 
-TARGET_OBJS = $(addprefix ${BIN_DIR}/,${OBJS})
+FOLDERLESS_OBJS = $(notdir ${OBJS})
+
+
+TARGET_OBJS = $(addprefix ${BIN_DIR}/,${FOLDERLESS_OBJS})
 TARGET_SRC = $(addprefix ${SRC_DIR}/,${OBJS})
 
 BUILD_PRINT = @echo "\e[1;34mBuilding $<\e[0m"
@@ -60,11 +64,11 @@ navalidate: ${TARGET_SRC} navalidate.o
 
 navalidate.o: ${SRC_DIR}/navalidate.cpp
 	$(BUILD_PRINT)
-	@arch -x86_64 /usr/bin/g++ ${CFLAGS} $< -o ${BIN_DIR}/$(@F)
+	@arch -x86_64 /usr/bin/g++ ${CFLAGS} $< -o ${BIN_DIR}/$(notdir $@)
 
 %.o: %.cpp %.h
 	$(BUILD_PRINT)
-	@arch -x86_64 /usr/bin/g++ ${CFLAGS} $< -o ${BIN_DIR}/$(@F)
+	@arch -x86_64 /usr/bin/g++ ${CFLAGS} $< -o ${BIN_DIR}/$(notdir $@)
 
 clean:
 	echo "cleaning"

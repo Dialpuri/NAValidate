@@ -4,12 +4,12 @@
 
 
 int main(int argc, char **argv) {
-    CCP4Program prog("navalidate", "0.0.1", "$Date: 2023/12/17");
-    prog.set_termination_message("Failed");
-
-    std::cout << std::endl << "Copyright 2023 Jordan Dialpuri and University of York." << std::endl << std::endl;
-    prog.summary_beg();
-    prog.summary_end();
+    // CCP4Program prog("navalidate", "0.0.1", "$Date: 2023/12/17");
+    // prog.set_termination_message("Failed");
+    //
+    // std::cout << std::endl << "Copyright 2023 Jordan Dialpuri and University of York." << std::endl << std::endl;
+    // prog.summary_beg();
+    // prog.summary_end();
 
     std::string pdb_in;
 
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     validator.validate();
 
 
-    prog.set_termination_message( "Normal termination" );
+    // prog.set_termination_message( "Normal termination" );
 
     return 0;
 }

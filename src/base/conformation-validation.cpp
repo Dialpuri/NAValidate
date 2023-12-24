@@ -2,10 +2,10 @@
 // Created by Jordan Dialpuri on 18/12/2023.
 //
 
-#include "base_validation.h"
+#include "conformation-validation.h"
 
 double BaseConformationValidation::calculate_chi(const clipper::MMonomer&monomer) {
-    const clipper::Vec3<> plane = calculate_plane(monomer);
+    const clipper::Vec3<> plane = ValidateUtil::calculate_plane(monomer);
     const clipper::Vec3<> plane_u = plane.unit();
 
     const int i_c1 = monomer.lookup("C1'", clipper::MM::UNIQUE);
@@ -23,7 +23,7 @@ double BaseConformationValidation::calculate_chi(const clipper::MMonomer&monomer
 
     const float dot = clipper::Vec3<>::dot(co_vector_unit, plane_u);
 
-    const double angle = acos(clip(dot, -1, 1)) + M_PI/2;
+    const double angle = acos(ValidateUtil::clip(dot, -1, 1)) + M_PI/2;
     return clipper::Util::rad2d(angle);
 }
 
@@ -80,61 +80,3 @@ Matrix<float> BaseConformationValidation::calculate_plane_equation(const clipper
     return X;
 }
 
-clipper::Vec3<> BaseConformationValidation::calculate_plane(const clipper::MMonomer& monomer) {
-    std::vector<clipper::Vec3<>> points = calculate_vector_calculation_point(monomer);
-    if (points.empty()) return {};
-
-    clipper::Vec3<> A = points[0];
-    clipper::Vec3<> B = points[1];
-    clipper::Vec3<> C = points[2];
-
-    clipper::Vec3<> BA = B-A;
-    clipper::Vec3<> CA = C-A;
-
-    clipper::Vec3<> n = clipper::Vec3<>::cross(BA, CA);
-
-    float d = clipper::Vec3<>::dot(n, B);
-    // std::cout << monomer.type() << monomer.id() << n.format() << d << std::endl;
-    // std::cout << "a, b, c, d = " << n[0] << "," << n[1] << "," << n[2] << "," << d << std::endl;
-    return n;
-}
-
-std::vector<clipper::Vec3<>> BaseConformationValidation::calculate_vector_calculation_point(
-    const clipper::MMonomer& monomer) {
-
-    std::set<std::string> purines = {"A", "G", "DG", "DA"};
-    std::set<std::string> pyrmidines = {"DT", "DC", "U", "C"};
-
-    if (purines.find(monomer.type()) != purines.end()) {
-        int i_n9 = monomer.lookup("N9", clipper::MM::UNIQUE);
-        int i_n7 = monomer.lookup("N7", clipper::MM::UNIQUE);
-        int i_n1 = monomer.lookup("N1", clipper::MM::UNIQUE);
-
-        if (i_n9 < 0 || i_n7 < 0 || i_n1 < 0) {
-            return {};
-        }
-
-        return {
-            monomer[i_n9].coord_orth(),
-            monomer[i_n7].coord_orth(),
-            monomer[i_n1].coord_orth()
-        };
-    }
-
-    if (pyrmidines.find(monomer.type()) != pyrmidines.end()) {
-        int i_n1 = monomer.lookup("N1", clipper::MM::UNIQUE);
-        int i_c5 = monomer.lookup("C5", clipper::MM::UNIQUE);
-        int i_o2 = monomer.lookup("O2", clipper::MM::UNIQUE);
-
-        if (i_n1 < 0 || i_c5 < 0 || i_o2 < 0) {
-            return {};
-        }
-
-        return {
-            monomer[i_n1].coord_orth(),
-            monomer[i_c5].coord_orth(),
-            monomer[i_o2].coord_orth()
-        };
-    }
-
-}

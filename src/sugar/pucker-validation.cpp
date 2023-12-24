@@ -1,7 +1,7 @@
 //
 // Created by Jordan Dialpuri on 17/12/2023.
 //
-#include "pucker_validate.h"
+#include "pucker-validation.h"
 
 PuckerResult PuckerValidate::calculate_pucker(const clipper::MMonomer& monomer) {
 // Torsions according to https://pubs.acs.org/doi/10.1021/acs.orglett.6b03626

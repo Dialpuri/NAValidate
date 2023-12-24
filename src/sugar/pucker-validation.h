@@ -5,7 +5,7 @@
 #ifndef PUCKER_VALIDATE_H
 #define PUCKER_VALIDATE_H
 
-#include "validate-util.h"
+#include "../util/validate-util.h"
 
 struct PuckerResult {
     PuckerResult(float i_P, float i_theta_m) {

@@ -4,9 +4,11 @@
 
 # NAMES OF LIBRARY FILES E.G nautilus-join 
 SHARED = \
- pucker_validate \
- base_validation \
- validate
+ base/conformation-validation \
+ base/pairing-validation \
+ sugar/pucker-validation \
+ validate \
+ util/validate-util
 
 LIBS = \
 -lccp4c \

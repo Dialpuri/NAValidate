@@ -4,7 +4,6 @@
 
 #include "validate.h"
 
-#include "base_validation.h"
 
 Validate::Validate(clipper::MiniMol& mol) {
     clipper::MiniMol na_only_model;
@@ -26,6 +25,11 @@ Validate::Validate(clipper::MiniMol& mol) {
 }
 
 void Validate::validate() {
+
+
+    BasePairValidation bpv = BasePairValidation(m_mol);
+    bpv.validate();
+    return;
 
     std::vector<std::vector<std::string>> results;
     for (int p = 0; p < m_mol.size(); p++) {

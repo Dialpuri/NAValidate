@@ -7,8 +7,10 @@
 
 #include <set>
 #include <clipper/clipper-minimol.h>
-#include "validate-util.h"
-#include "pucker_validate.h"
+#include "util/validate-util.h"
+#include "sugar/pucker-validation.h"
+#include "base/conformation-validation.h"
+#include "base/pairing-validation.h"
 
 class Validate {
 public:
