@@ -69,6 +69,8 @@ clipper::MMonomer ValidateUtil::hydrogenate_base(clipper::MMonomer& monomer) {
         if (it == bonded_atoms.end()) continue;
         const std::string bonded_atom_name = it->second.bonded_atom;
 
+        int no_h_atom = 1;
+
         for (const int& angle: it->second.atom_angles) {
             const clipper::Mat33<> rot = calculate_rodrigues_rotation_matrix(base_plane.unit(), angle);
             const clipper::RTop_orth rotation = {rot,{0,0,0}};
@@ -97,7 +99,13 @@ clipper::MMonomer ValidateUtil::hydrogenate_base(clipper::MMonomer& monomer) {
 
             bonded_matom.set_id(name);
             bonded_matom.set_element("H");
-            bonded_matom.set_name(name);
+
+            std::string h_name = name;
+            h_name.replace(0,1, "H");
+            h_name += std::to_string(no_h_atom);
+            no_h_atom++;
+
+            bonded_matom.set_name(h_name);
             mon.insert(bonded_matom);
         }
     }
