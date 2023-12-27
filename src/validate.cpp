@@ -6,7 +6,7 @@
 
 
 Validate::Validate(clipper::MiniMol& mol) {
-    clipper::MiniMol na_only_model;
+    clipper::MiniMol na_only_model = {mol.spacegroup(), mol.cell()};
 
     for (int p = 0; p < mol.size(); p++) {
         clipper::MPolymer mp;

@@ -15,31 +15,16 @@ std::string ValidateUtil::base_type(const std::string& base_type_id) {
 }
 
 HydrogenBondingAtoms ValidateUtil::get_h_atoms(const std::string& monomer_name) {
-    HydrogenBondingAtoms adenine = HydrogenBondingAtoms({"N6"}, {"N1"});
-    HydrogenBondingAtoms guanine = HydrogenBondingAtoms({"N2", "N1"}, {"O6"});
-    HydrogenBondingAtoms cytosine = HydrogenBondingAtoms( {"N4", "N3"}, {"O2"});
-    HydrogenBondingAtoms thymine_uracil = HydrogenBondingAtoms({"N3"}, {"O2"});
-
-    std::unordered_map<std::string, HydrogenBondingAtoms> hydrogen_bonding_map = {
-        {"A", adenine},
-      {"DA", adenine},
-      {"G", guanine},
-      {"DG",guanine},
-
-      {"C", cytosine },
-      {"DC", cytosine},
-      {"DT", thymine_uracil},
-      {"U", thymine_uracil},
-    };
-    const auto it = hydrogen_bonding_map.find(monomer_name);
+    HBondData data;
+    const auto it = data.hydrogen_bonding_map.find(monomer_name);
     return it->second;
 }
 
 clipper::MiniMol ValidateUtil::hydrogenate_model(clipper::MiniMol& mol) {
-    clipper::MiniMol h_mol;
+    clipper::MiniMol h_mol = {mol.spacegroup(), mol.cell()};
     for (int p = 0; p < mol.size(); p++) {
         clipper::MPolymer mp;
-        mp.set_id(p);
+        mp.set_id(mol[p].id());
         for (int m = 0; m < mol[p].size(); m++) {
             clipper::MMonomer h_mon = hydrogenate_base(mol[p][m]);
             mp.insert(h_mon);
@@ -51,34 +36,28 @@ clipper::MiniMol ValidateUtil::hydrogenate_model(clipper::MiniMol& mol) {
 
 
 clipper::MMonomer ValidateUtil::hydrogenate_base(clipper::MMonomer& monomer) {
-
+    HBondData data;
     clipper::MMonomer mon = monomer;
-    const std::map<std::string, HydrogenPositionData> bonded_atoms = {
-        {"N1", {"C2", {120}, 1.017}},
-        {"N2", {"C2", {120, -120}, 1.017}},
-        {"N3", {"C4", {120}, 1.017}},
-        {"N4", {"C4", {120, -120}, 1.017}},
-        {"N6", {"C6", {120, -120}, 1.017}}
-    };
 
     const clipper::Vec3<> base_plane = calculate_plane(monomer);
-    const HydrogenBondingAtoms hydrogen_bonding_atoms = get_h_atoms(monomer.type());
+    // const HydrogenBondingAtoms hydrogen_bonding_atoms = get_h_atoms(monomer.type());
 
-    for (const std::string& name: hydrogen_bonding_atoms.donor_atoms) {
-        const auto it = bonded_atoms.find(clipper::String(name).trim());
-        if (it == bonded_atoms.end()) continue;
-        const std::string bonded_atom_name = it->second.bonded_atom;
+    const auto h_bond_it = data.bonded_atoms.find(monomer.type().trim());
+    if (h_bond_it == data.bonded_atoms.end()) {std::cout << "[Critical] Non recognised monomer! " << std::endl; return {};}
+
+    for (const HydrogenPositionData& h_pos_data: h_bond_it->second.arr) {
+        const std::string bonded_atom_name = h_pos_data.referance_atom;
 
         int no_h_atom = 1;
 
-        for (const int& angle: it->second.atom_angles) {
+        for (const int& angle: h_pos_data.atom_angles) {
             const clipper::Mat33<> rot = calculate_rodrigues_rotation_matrix(base_plane.unit(), angle);
             const clipper::RTop_orth rotation = {rot,{0,0,0}};
 
             const int bonded_id = monomer.lookup(bonded_atom_name, clipper::MM::UNIQUE);
             if (bonded_id < 0) continue;
 
-            const int current_id = monomer.lookup(name, clipper::MM::UNIQUE);
+            const int current_id = monomer.lookup(h_pos_data.h_bond_atom, clipper::MM::UNIQUE);
             if (current_id < 0) continue;
 
             clipper::MAtom bonded_matom = monomer[bonded_id];
@@ -93,14 +72,13 @@ clipper::MMonomer ValidateUtil::hydrogenate_base(clipper::MMonomer& monomer) {
 
             clipper::Vec3<> bond_vec = bonded_matom.coord_orth()-current_matom.coord_orth();
             clipper::Vec3<> bond_vec_unit = bond_vec.unit();
-            double bond_distance = 1.017;
-            clipper::Vec3<> hydrogen_vec = bond_distance*bond_vec_unit;
+            clipper::Vec3<> hydrogen_vec = h_pos_data.h_bond_length*bond_vec_unit;
             bonded_matom.set_coord_orth(current_matom.coord_orth()+clipper::Coord_orth(hydrogen_vec));
 
-            bonded_matom.set_id(name);
+            bonded_matom.set_id(h_pos_data.h_bond_atom);
             bonded_matom.set_element("H");
 
-            std::string h_name = name;
+            std::string h_name = h_pos_data.h_bond_atom;
             h_name.replace(0,1, "H");
             h_name += std::to_string(no_h_atom);
             no_h_atom++;
