@@ -13,8 +13,8 @@
  */
 struct HydrogenBondingAtoms {
     HydrogenBondingAtoms(const std::vector<std::string>&donor,
-                         const std::vector<std::string>&atom) {
-        donor_atoms = donor, acceptor_atoms = atom;
+                         const std::vector<std::string>&acceptor) {
+        donor_atoms = donor, acceptor_atoms = acceptor;
     }
 
     std::vector<std::string> donor_atoms;
@@ -29,13 +29,13 @@ struct HydrogenPositionData {
                          const std::vector<int>&angles,
                          const double bond_length) {
         h_bond_atom = atom;
-        referance_atom = ref_atom;
+        reference_atom = ref_atom;
         atom_angles = angles;
         h_bond_length = bond_length;
     }
 
     std::string h_bond_atom;
-    std::string referance_atom;
+    std::string reference_atom;
     std::vector<int> atom_angles;
     double h_bond_length;
 };
@@ -49,10 +49,10 @@ struct HydrogenPositions {
 struct HBondData {
 
     // Expected H Bond data
-    HydrogenBondingAtoms adenine = HydrogenBondingAtoms({"N6"}, {"N1"});
-    HydrogenBondingAtoms guanine = HydrogenBondingAtoms({"N2", "N1"}, {"O6"});
-    HydrogenBondingAtoms cytosine = HydrogenBondingAtoms( {"N4"}, {"O2"});
-    HydrogenBondingAtoms thymine_uracil = HydrogenBondingAtoms({"N3"}, {"O2"});
+    HydrogenBondingAtoms adenine = HydrogenBondingAtoms({"N6"}, {"O4"});
+    HydrogenBondingAtoms guanine = HydrogenBondingAtoms({"N2", "N1"}, {"O2", "N3"});
+    HydrogenBondingAtoms cytosine = HydrogenBondingAtoms( {"N4"}, {"O6"});
+    HydrogenBondingAtoms thymine_uracil = HydrogenBondingAtoms({"N3"}, {"N1"});
 
     std::unordered_map<std::string, HydrogenBondingAtoms> hydrogen_bonding_map = {
         {"A", adenine},

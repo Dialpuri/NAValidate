@@ -12,6 +12,17 @@ enum BasePairResult {
     pair, non_pair, not_recognised
 };
 
+struct HBondResult {
+    HBondResult(const int count, const int& id, const std::string& type) {
+        h_bonds = count;
+        paired_monomer_id=id;
+        paired_monomer_type=type;
+    }
+    int h_bonds;
+    int paired_monomer_id;
+    std::string paired_monomer_type;
+};
+
 /**
  * \brief BasePairValidation
  * constructed with a MiniMol object
@@ -28,11 +39,13 @@ public:
     static clipper::Vec3<> get_probe_positon(clipper::MMonomer& mon, const std::string &donor_atom,
         const std::string& h_aton, double probe_length=3) noexcept;
 
-    void validate_basepair(clipper::MMonomer& mon, clipper::MAtomNonBond ns);
+    HBondResult calculate_h_bonds(clipper::MMonomer&mon, clipper::MAtomNonBond ns);
 
 private:
     clipper::MAtomNonBond m_ns;
     clipper::MiniMol m_mol;
+
+    clipper::MMonomer add_debug_probes(clipper::MMonomer& mon);
 
     BasePairResult is_base_pair(const std::string& a, const std::string& b) {
         const auto a_it = base_pairing.find(a);
@@ -49,7 +62,7 @@ private:
         {"A", {"U", "DT"}},
         {"DA", {"U", "DT"}},
 
-        {"DT", {"A", "DT"}},
+        {"DT", {"A", "DA"}},
 
         {"C", {"G", "DG"}},
         {"DC", {"G", "DG"}},
